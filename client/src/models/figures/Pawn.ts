@@ -1,8 +1,8 @@
 import { Cell } from "../Cell";
-import { Colors } from "../Colors";
-import { Figure, FigureNames } from "./Figure";
+import { Figure } from "./Figure";
 import blackLogo from "../../assets/black-pawn.png";
 import whiteLogo from "../../assets/white-pawn.png";
+import { Colors, FigureNames } from "@/types";
 
 export class Pawn extends Figure {
   isFirstStep: boolean = true;
@@ -11,16 +11,26 @@ export class Pawn extends Figure {
     this.logo = color === Colors.BLACK ? blackLogo : whiteLogo;
     this.name = FigureNames.PAWN;
   }
-  canMove(target: Cell): boolean {
-    if (!super.canMove(target)) return false;
-
+  canStep(target: Cell): boolean {
+    if (!super.canStep(target)) return false;
     const direction = this.cell.figure?.color === Colors.BLACK ? 1 : -1;
     const firstStepDirection =
       this.cell.figure?.color === Colors.BLACK ? 2 : -2;
 
     if (
-      (target.y === this.cell.y + direction ||
-        (this.isFirstStep && target.y === this.cell.y + firstStepDirection)) &&
+      this.isFirstStep &&
+      target.y === this.cell.y + firstStepDirection &&
+      target.x === this.cell.x &&
+      this.cell.board.getCell(target.x, target.y).isEmpty() &&
+      this.cell.board
+        .getCell(target.x, JSON.parse(JSON.stringify(this.cell.y + direction)))
+        .isEmpty()
+    ) {
+      return true;
+    }
+
+    if (
+      target.y === this.cell.y + direction &&
       target.x === this.cell.x &&
       this.cell.board.getCell(target.x, target.y).isEmpty()
     ) {
@@ -36,6 +46,18 @@ export class Pawn extends Figure {
     }
 
     return false;
+  }
+
+  canMove(target: Cell): boolean {
+    if (!super.canMove(target)) return false;
+    if (super.willOpenKingForAttack(target)) return false;
+    if (!this.canStep(target)) return false;
+
+    return true;
+  }
+
+  willBeatKing(target: Cell): boolean {
+    return this.canStep(target) ? true : false;
   }
 
   moveFigure(target: Cell): void {

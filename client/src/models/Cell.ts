@@ -1,6 +1,7 @@
+import { generateUID } from "@/helpers";
 import { Board } from "./Board";
-import { Colors } from "./Colors";
 import { Figure } from "./figures/Figure";
+import { Colors, FigureNames } from "@/types";
 
 export class Cell {
   readonly x: number;
@@ -9,7 +10,7 @@ export class Cell {
   figure: Figure | null;
   board: Board;
   available: boolean;
-  id: number;
+  id: string;
 
   constructor(
     board: Board,
@@ -24,11 +25,15 @@ export class Cell {
     this.figure = figure;
     this.board = board;
     this.available = false;
-    this.id = Math.floor(Math.random() * 1000);
+    this.id = generateUID();
   }
 
   isEmpty(): boolean {
     return this.figure === null;
+  }
+
+  isKing(): boolean {
+    return this.figure?.name === FigureNames.KING;
   }
 
   isEnemy(target: Cell): boolean {
@@ -83,6 +88,10 @@ export class Cell {
     return true;
   }
 
+  removeFigure() {
+    this.figure = null;
+  }
+
   setFigure(figure: Figure) {
     this.figure = figure;
     this.figure.cell = this;
@@ -90,6 +99,15 @@ export class Cell {
 
   moveFigure(target: Cell) {
     if (this.figure && this.figure.canMove(target)) {
+      this.figure.moveFigure(target);
+      // this.figure.hasMoved = true;
+      target.setFigure(this.figure);
+      this.figure = null;
+    }
+  }
+
+  moveFigureWithoutCheck(target: Cell) {
+    if (this.figure) {
       this.figure.moveFigure(target);
       target.setFigure(this.figure);
       this.figure = null;
